@@ -92,8 +92,6 @@ export default function PongApp() {
             if (moveR) player1.x = Math.min(player1.x + PLAYER_SPEED, canvas.width - PADDLE_WIDTH);
             if (moveL) player1.x = Math.max(player1.x - PLAYER_SPEED, 0);
 
-            player2.x = ball.x - PADDLE_WIDTH/2
-
             ball.draw(ctx);
             ball.update(frameRate, canvas);
 
