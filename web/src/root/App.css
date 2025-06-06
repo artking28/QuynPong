@@ -128,9 +128,11 @@ div#main {
 
     div#game {
         background-color: black;
+        justify-content: center;
+        display: grid;
 
         h1 {
-            margin: 0 auto;
+            margin: 0 auto 20px;
         }
 
         div#canvaDiv {
@@ -141,7 +143,7 @@ div#main {
                 border: 1px solid rgb(43 43 43);
                 background: rgb(14, 14, 14);
                 border-radius: 15px;
-                margin: 5vh auto;
+                margin: 1vh auto;
                 display: grid;
                 height: 75vh;
                 width: 45vh;

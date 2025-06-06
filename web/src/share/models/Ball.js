@@ -1,12 +1,13 @@
-import {getRandomVelocity} from "../utils/utils.js";
 
 export class Ball {
-    constructor(x, y, color, radius, speed) {
+
+    constructor(x, y, color, radius, dx, dy) {
         this.x = x;
         this.y = y;
         this.color = color;
         this.radius = radius;
-        [this.dx, this.dy] = getRandomVelocity(speed*10);
+        this.dx = dx
+        this.dy = dy
     }
 
     draw(ctx) {
