@@ -13,3 +13,7 @@ export function getRandomVelocity(speed) {
 
     return [dx, dy];
 }
+
+export function seconds(n) {
+    return n * 1000
+}

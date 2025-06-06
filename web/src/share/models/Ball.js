@@ -29,8 +29,8 @@ export class Ball {
     }
 
     intervene() {
-        this.dy += (Math.random()*5);
-        this.dx += (Math.random()*5);
+        this.dy += (Math.random()*10);
+        this.dx += (Math.random()*10);
     }
 
     swap(canvas) {

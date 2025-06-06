@@ -2,6 +2,7 @@ import React, {useState, useEffect, useRef} from 'react';
 import './App.css';
 import {Ball} from "../share/models/Ball.js";
 import {Paddle} from "../share/models/Paddle.js";
+import {seconds} from "../share/utils/utils.js";
 
 const WS_URL = 'ws://localhost:3000';
 
@@ -43,8 +44,8 @@ export default function PongApp() {
         let greenPointValue = 0;
         let redPointValue = 0;
         let isInverted = false;
-        let pause = false;
-        let forceRenderOnPause = 0;
+        let start = false;
+        let forceRenderOnPause = 1;
 
         let xPos = (canvas.width - PADDLE_WIDTH) / 2;
         let ball = new Ball(canvas.width / 2, canvas.height / 2, "white", 5, BALL_SPEED);
@@ -63,11 +64,15 @@ export default function PongApp() {
             ball = new Ball(canvas.width / 2, canvas.height / 2, "white", 5, BALL_SPEED);
             player1 = new Paddle(xPos, canvas.height - 20, PADDLE_WIDTH, PADDLE_HEIGHT, PADDLE_RADIUS, GREEN);
             player2 = new Paddle(xPos, 10, PADDLE_WIDTH, PADDLE_HEIGHT, PADDLE_RADIUS, RED);
+            start = false
+            forceRenderOnPause++
+            setTimeout(() => {
+                start = true
+            }, seconds(3))
 
             if (greenPointValue === 4 || redPointValue === 4) {
                 greenPointValue = 0;
                 redPointValue = 0;
-                pause = !pause;
             }
 
             if (isInverted) {
@@ -78,7 +83,7 @@ export default function PongApp() {
 
         let animationFrameId
         const loop = () => {
-            if (pause && forceRenderOnPause <= 0) {
+            if (!start && forceRenderOnPause <= 0) {
                 animationFrameId = window.requestAnimationFrame(loop)
                 return
             }
@@ -98,8 +103,8 @@ export default function PongApp() {
             const hit = (b, p) => {
                 return b.x >= p.x &&
                     b.x <= p.x + p.width &&
-                    b.y + b.radius >= p.y &&
-                    b.y - b.radius <= p.y + p.height;
+                    b.y + b.radius >= p.y - PADDLE_HEIGHT &&
+                    b.y - b.radius <= p.y + PADDLE_HEIGHT;
             }
 
             const inv = (isInverted ? -1 : 1)
@@ -142,7 +147,7 @@ export default function PongApp() {
             if (["a", "arrowleft"].includes(e.key.toLowerCase())) moveL = true;
             if (["d", "arrowright"].includes(e.key.toLowerCase())) moveR = true;
             if (e.key === "Shift") swap();
-            if (e.code === "Space") pause = !pause;
+            if (e.code === "Space") start = true;
         };
 
         const keyUp = (e) => {
