@@ -4,7 +4,7 @@ import {Ball} from "../share/models/Ball.js";
 import {Paddle} from "../share/models/Paddle.js";
 import {seconds} from "../share/utils/utils.js";
 
-const WS_URL = 'ws://localhost:3000';
+const WS_URL = 'ws://192.168.15.52:1110/'
 
 export default function PongApp() {
     const ws = useRef(null);
@@ -16,6 +16,8 @@ export default function PongApp() {
     const [nameConfirmed, setNameConfirmed] = useState(false);
     const [chat, setChat] = useState([]);
     const [message, setMessage] = useState('');
+
+    const player2ControlRef = useRef({ moveL: false, moveR: false });
 
     const containerRef = useRef();
     const greenPointRef = useRef();
@@ -97,12 +99,16 @@ export default function PongApp() {
             if (moveR) player1.x = Math.min(player1.x + PLAYER_SPEED, canvas.width - PADDLE_WIDTH);
             if (moveL) player1.x = Math.max(player1.x - PLAYER_SPEED, 0);
 
+            console.log(player2ControlRef.current.moveR)
+            console.log(player2ControlRef.current.moveL)
+            if (player2ControlRef.current.moveR) player2.x = Math.min(player2.x + PLAYER_SPEED, canvas.width - PADDLE_WIDTH);
+            if (player2ControlRef.current.moveL) player2.x = Math.max(player2.x - PLAYER_SPEED, 0);
+
             ball.draw(ctx);
             ball.update(frameRate, canvas);
 
             const hit = (b, p) => {
-                return b.x >= p.x &&
-                    b.x <= p.x + p.width &&
+                return b.x >= p.x && b.x <= p.x + p.width &&
                     b.y + b.radius >= p.y - PADDLE_HEIGHT &&
                     b.y - b.radius <= p.y + PADDLE_HEIGHT;
             }
@@ -144,15 +150,27 @@ export default function PongApp() {
         loop()
 
         const keyDown = (e) => {
-            if (["a", "arrowleft"].includes(e.key.toLowerCase())) moveL = true;
-            if (["d", "arrowright"].includes(e.key.toLowerCase())) moveR = true;
+            if (["a", "arrowleft"].includes(e.key.toLowerCase())) {
+                moveL = true;
+                ws.current.send(JSON.stringify({ type: 'playerControl', text: 'moveL' }));
+            }
+            if (["d", "arrowright"].includes(e.key.toLowerCase())) {
+                moveR = true;
+                ws.current.send(JSON.stringify({ type: 'playerControl', text: 'moveR' }));
+            }
             if (e.key === "Shift") swap();
             if (e.code === "Space") start = true;
         };
 
         const keyUp = (e) => {
-            if (["a", "arrowleft"].includes(e.key.toLowerCase())) moveL = false;
-            if (["d", "arrowright"].includes(e.key.toLowerCase())) moveR = false;
+            if (["a", "arrowleft"].includes(e.key.toLowerCase())) {
+                moveL = false;
+                ws.current.send(JSON.stringify({ type: 'playerControl', text: 'stopL' }));
+            }
+            if (["d", "arrowright"].includes(e.key.toLowerCase())) {
+                moveR = false;
+                ws.current.send(JSON.stringify({ type: 'playerControl', text: 'stopR' }));
+            }
         };
 
         document.addEventListener("keydown", keyDown);
@@ -163,7 +181,7 @@ export default function PongApp() {
             document.removeEventListener("keydown", keyDown);
             document.removeEventListener("keyup", keyUp);
         };
-    }, [nameConfirmed]);
+    }, [nameConfirmed, player2ControlRef, ws]);
 
     useEffect(() => {
         if (!containerRef.current) {
@@ -198,6 +216,11 @@ export default function PongApp() {
                 setChat(data.content.chatMessages);
             } else if (data.type === 'chat') {
                 setChat(data.content);
+            } else if (data.type === 'control') {
+                if (data.content.control === 'moveL') player2ControlRef.current.moveL = true;
+                if (data.content.control === 'moveR') player2ControlRef.current.moveR = true;
+                if (data.content.control === 'stopL') player2ControlRef.current.moveL = false;
+                if (data.content.control === 'stopR') player2ControlRef.current.moveR = false;
             }
         };
 

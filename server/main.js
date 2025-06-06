@@ -1,14 +1,14 @@
 const WebSocket = require('ws');
-const wss = new WebSocket.Server({port: 3000});
+const wss = new WebSocket.Server({port: 1110});
 
 let queue = [];
 let players = []; // até 2 jogadores jogando
 let chatMessages = [];
 
-function broadcast(type, data) {
+function broadcast(type, data, sender) {
     wss.clients.forEach(client => {
         if (client.readyState === WebSocket.OPEN) {
-            client.send(JSON.stringify({type: type, content: data}));
+            client.send(JSON.stringify({ type, content: data }));
         }
     });
 }
@@ -21,12 +21,21 @@ export class Msg {
     }
 }
 
+export class Control {
+    constructor(from, control) {
+        this.createdAt = new Date()
+        this.control = control
+        this.from = from
+    }
+}
+
+
 wss.on('connection', ws => {
     let playerName = null;
 
-    ws.on('message', message => {
-        // console.log(message.toString())
+    ws.on('message', (message) => {
         const data = JSON.parse(message);
+        // console.log(message.toString())
 
         switch (data.type) {
             case 'join':
@@ -38,7 +47,7 @@ wss.on('connection', ws => {
 
             case 'chat':
                 chatMessages.push(new Msg(playerName, data.text));
-                broadcast('chat', chatMessages);
+                broadcast('chat', chatMessages, ws);
                 break;
 
             case 'startGame':
@@ -57,6 +66,10 @@ wss.on('connection', ws => {
                     chatMessages.push(new Msg('system', `${playerName} perdeu e voltou para a fila.`))
                     updateState();
                 }
+                break;
+
+            case 'playerControl':
+                broadcast('control', new Control(playerName, data.text));
                 break;
         }
     });
@@ -77,7 +90,7 @@ wss.on('connection', ws => {
     });
 
     function updateState() {
-        broadcast('state', {players, queue, chatMessages});
+        broadcast('state', {players, queue, chatMessages}, ws);
     }
 
     updateState();
