@@ -1,5 +1,7 @@
 import React, {useState, useEffect, useRef} from 'react';
 import './App.css';
+import {Ball} from "../share/models/Ball.js";
+import {Paddle} from "../share/models/Paddle.js";
 
 const WS_URL = 'ws://localhost:3000';
 
@@ -15,68 +17,142 @@ export default function PongApp() {
     const [message, setMessage] = useState('');
 
     const containerRef = useRef();
+    const greenPointRef = useRef();
+    const redPointRef = useRef();
     const canvasRef = useRef();
 
     useEffect(() => {
-        if (!players.includes(name)) return;
+        if (!nameConfirmed) return;
 
+        const greenPoint = greenPointRef.current;
+        const redPoint = redPointRef.current;
         const canvas = canvasRef.current;
-        const ctx = canvas.getContext('2d');
+        const ctx = canvas.getContext("2d");
 
-        let paddleX = canvas.width / 2 - 40;
-        const paddleY = 10;
-        let ballX = canvas.width / 2;
-        let ballY = canvas.height / 2;
-        let ballDX = 2;
-        let ballDY = -3;
+        const GREEN = "#32a86d";
+        const RED = "#e83f3f";
+        const PADDLE_HEIGHT = 10;
+        const PADDLE_WIDTH = 70;
+        const PADDLE_RADIUS = 5;
+        const PLAYER_SPEED = 10;
+        const BALL_SPEED = 300;
+        const frameRate = 1000 / 200;
 
-        let left = false;
-        let right = false;
+        let moveR = false;
+        let moveL = false;
+        let greenPointValue = 0;
+        let redPointValue = 0;
+        let isInverted = false;
+        let pause = false;
+        let forceRenderOnPause = 0;
 
-        const draw = () => {
+        let xPos = (canvas.width - PADDLE_WIDTH) / 2;
+        let ball = new Ball(canvas.width / 2, canvas.height / 2, "white", 5, BALL_SPEED);
+        let player1 = new Paddle(xPos, canvas.height - 20, PADDLE_WIDTH, PADDLE_HEIGHT, PADDLE_RADIUS, GREEN);
+        let player2 = new Paddle(xPos, 10, PADDLE_WIDTH, PADDLE_HEIGHT, PADDLE_RADIUS, RED);
+
+        const swap = () => {
+            player1.swap(canvas);
+            player2.swap(canvas);
+            ball.swap(canvas);
+            forceRenderOnPause++;
+            isInverted = !isInverted;
+        };
+
+        const restart = () => {
+            ball = new Ball(canvas.width / 2, canvas.height / 2, "white", 5, BALL_SPEED);
+            player1 = new Paddle(xPos, canvas.height - 20, PADDLE_WIDTH, PADDLE_HEIGHT, PADDLE_RADIUS, GREEN);
+            player2 = new Paddle(xPos, 10, PADDLE_WIDTH, PADDLE_HEIGHT, PADDLE_RADIUS, RED);
+
+            if (greenPointValue === 4 || redPointValue === 4) {
+                greenPointValue = 0;
+                redPointValue = 0;
+                pause = !pause;
+            }
+
+            if (isInverted) {
+                isInverted = false;
+                swap();
+            }
+        };
+
+        let animationFrameId
+        const loop = () => {
+            if (pause && forceRenderOnPause <= 0) {
+                animationFrameId = window.requestAnimationFrame(loop)
+                return
+            }
+            forceRenderOnPause = Math.max(forceRenderOnPause - 1, 0);
+
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = 'white';
-            ctx.fillRect(paddleX, paddleY, 80, 10);
-            ctx.beginPath();
-            ctx.arc(ballX, ballY, 6, 0, Math.PI * 2);
-            ctx.fill();
 
-            if (right && paddleX < canvas.width - 80) paddleX += 5;
-            if (left && paddleX > 0) paddleX -= 5;
+            player1.draw(ctx);
+            player2.draw(ctx);
 
-            ballX += ballDX;
-            ballY += ballDY;
+            if (moveR) player1.x += PLAYER_SPEED;
+            if (moveL) player1.x -= PLAYER_SPEED;
 
-            if (ballX <= 0 || ballX >= canvas.width) ballDX *= -1;
-            if (ballY <= 0) ballDY *= -1;
+            ball.draw(ctx);
+            ball.update(frameRate, canvas);
 
-            // colisão com a raquete
-            if (ballY <= paddleY + 10 && ballX >= paddleX && ballX <= paddleX + 80) {
-                ballDY *= -1;
+            const hit = (b, p) => {
+                return b.x >= p.x &&
+                    b.x <= p.x + p.width &&
+                    b.y + b.radius >= p.y &&
+                    b.y - b.radius <= p.y + p.height;
             }
 
-            // se perder
-            if (ballY > canvas.height) {
-                ws.current.send(JSON.stringify({ type: 'lose' }));
+            const inv = (isInverted ? -1 : 1)
+            if (hit(ball, player1)) ball.dy = -Math.abs(ball.dy) * inv;
+            if (hit(ball, player2)) ball.dy = Math.abs(ball.dy) * inv;
+
+            if (ball.y <= 5) {
+                if (!isInverted) {
+                    greenPointValue++;
+                    greenPoint.textContent = greenPointValue;
+                } else {
+                    redPointValue++;
+                    redPoint.textContent = redPointValue;
+                }
+                restart();
             }
 
-            requestAnimationFrame(draw);
+            if (ball.y >= canvas.height - 5) {
+                if (!isInverted) {
+                    redPointValue++;
+                    redPoint.textContent = redPointValue;
+                } else {
+                    greenPointValue++;
+                    greenPoint.textContent = greenPointValue;
+                }
+                restart();
+            }
+
+            animationFrameId = window.requestAnimationFrame(loop)
+        }
+        loop()
+
+        const keyDown = (e) => {
+            if (["a", "arrowleft"].includes(e.key.toLowerCase())) moveL = true;
+            if (["d", "arrowright"].includes(e.key.toLowerCase())) moveR = true;
+            if (e.key === "Shift") swap();
+            if (e.code === "Space") pause = !pause;
         };
 
-        const handleKey = (e) => {
-            if (e.key === 'ArrowLeft') left = e.type === 'keydown';
-            if (e.key === 'ArrowRight') right = e.type === 'keydown';
+        const keyUp = (e) => {
+            if (["a", "arrowleft"].includes(e.key.toLowerCase())) moveL = false;
+            if (["d", "arrowright"].includes(e.key.toLowerCase())) moveR = false;
         };
 
-        document.addEventListener('keydown', handleKey);
-        document.addEventListener('keyup', handleKey);
-        draw();
+        document.addEventListener("keydown", keyDown);
+        document.addEventListener("keyup", keyUp);
 
         return () => {
-            document.removeEventListener('keydown', handleKey);
-            document.removeEventListener('keyup', handleKey);
+            window.cancelAnimationFrame(animationFrameId)
+            document.removeEventListener("keydown", keyDown);
+            document.removeEventListener("keyup", keyUp);
         };
-    }, [players, name]);
+    }, [nameConfirmed]);
 
     useEffect(() => {
         if (!containerRef.current) {
@@ -194,13 +270,16 @@ export default function PongApp() {
                     {/* Jogo Pong - placeholder */}
                     <div id="game" className="sec">
                         <h1>Quyn-pong</h1>
-                        {!players.includes(name) && queue.slice(0, 2).includes(name) && (
-                            <p style={{ color: 'white', textAlign: 'center' }}>
-                                Pressione espaço para iniciar o jogo
-                            </p>
-                        )}
-                        <canvas ref={canvasRef}/>
+                        <div id={"canvaDiv"}>
+                            <canvas ref={canvasRef} width={0.45*window.innerHeight} height={0.75*window.innerHeight} />
+                            <label>
+                                <span ref={redPointRef} style={{ color: "#e83f3f" }}>0</span>
+                                <span style={{ color: "white" }}> - </span>
+                                <span ref={greenPointRef} style={{ color: "#32a86d" }}>0</span>
+                            </label>
+                        </div>
                     </div>
+
 
                     {/* Fila */}
                     <div id="fila" className="sec">

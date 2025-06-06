@@ -133,14 +133,28 @@ div#main {
             margin: 0 auto;
         }
 
-        canvas {
-            border: 1px solid rgb(170, 170, 170);
-            background: rgb(10, 11, 18);
-            border-radius: 15px;
-            margin: 0 auto;
+        div#canvaDiv {
+            justify-content: center;
             display: grid;
-            height: 75vh;
-            width: 45vh;
+
+            canvas {
+                border: 1px solid rgb(43 43 43);
+                background: rgb(14, 14, 14);
+                border-radius: 15px;
+                margin: 5vh auto;
+                display: grid;
+                height: 75vh;
+                width: 45vh;
+            }
+
+            label {
+                background-color: black;
+                font-family: monospace;
+                border-radius: 10px;
+                padding: 5px 20px;
+                font-size: 25pt;
+                margin: 0 auto;
+            }
         }
     }
 
