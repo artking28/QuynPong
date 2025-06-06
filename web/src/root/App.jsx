@@ -32,10 +32,10 @@ export default function PongApp() {
         const GREEN = "#32a86d";
         const RED = "#e83f3f";
         const PADDLE_HEIGHT = 10;
-        const PADDLE_WIDTH = 70;
+        const PADDLE_WIDTH = 100;
         const PADDLE_RADIUS = 5;
         const PLAYER_SPEED = 10;
-        const BALL_SPEED = 300;
+        const BALL_SPEED = 400;
         const frameRate = 1000 / 200;
 
         let moveR = false;
@@ -89,8 +89,10 @@ export default function PongApp() {
             player1.draw(ctx);
             player2.draw(ctx);
 
-            if (moveR) player1.x += PLAYER_SPEED;
-            if (moveL) player1.x -= PLAYER_SPEED;
+            if (moveR) player1.x = Math.min(player1.x + PLAYER_SPEED, canvas.width - PADDLE_WIDTH);
+            if (moveL) player1.x = Math.max(player1.x - PLAYER_SPEED, 0);
+
+            player2.x = ball.x - PADDLE_WIDTH/2
 
             ball.draw(ctx);
             ball.update(frameRate, canvas);
@@ -103,8 +105,14 @@ export default function PongApp() {
             }
 
             const inv = (isInverted ? -1 : 1)
-            if (hit(ball, player1)) ball.dy = -Math.abs(ball.dy) * inv;
-            if (hit(ball, player2)) ball.dy = Math.abs(ball.dy) * inv;
+            if (hit(ball, player1)) {
+                ball.dy = -Math.abs(ball.dy) * inv;
+                ball.intervene()
+            }
+            if (hit(ball, player2)) {
+                ball.dy = Math.abs(ball.dy) * inv;
+                ball.intervene()
+            }
 
             if (ball.y <= 5) {
                 if (!isInverted) {

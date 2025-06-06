@@ -2,8 +2,8 @@
 export function getRandomVelocity(speed) {
     const degToRad = (deg) => deg * (Math.PI / 180);
     const angleRanges = [
-        [degToRad(30), degToRad(150)],
-        [degToRad(210), degToRad(330)],
+        [degToRad(40), degToRad(140)],
+        [degToRad(220), degToRad(320)],
     ];
     const [min, max] = angleRanges[Math.floor(Math.random() * 2)];
     const angle = Math.random() * (max - min) + min;

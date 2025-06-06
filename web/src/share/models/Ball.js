@@ -24,11 +24,13 @@ export class Ball {
 
         if (this.x + this.radius > canvas.width || this.x - this.radius < 0) {
             this.dx = -this.dx;
+            this.intervene()
         }
+    }
 
-        if (this.y + this.radius > canvas.height || this.y - this.radius < 0) {
-            this.dy = -this.dy;
-        }
+    intervene() {
+        this.dy += (Math.random()*5);
+        this.dx += (Math.random()*5);
     }
 
     swap(canvas) {
