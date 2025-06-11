@@ -8,7 +8,8 @@ let queue = [];
 const GAME_STATE = {
     WAITING: 'waiting',
     PLAYING: 'playing',
-    POINT_SCORED: 'point_scored'
+    POINT_SCORED: 'point_scored',
+    GAME_OVER: 'game_over'
 };
 let currentGameState = GAME_STATE.WAITING;
 
@@ -25,6 +26,7 @@ let ball = {
 };
 
 let playerPaddles = [50, 50]; // Posição X central de cada raquete (em %)
+let playerScores = [0, 0]; // Pontuação de cada jogador
 
 const PADDLE_WIDTH_PERCENT = (100 / 350) * 100;
 const PADDLE_HEIGHT_PERCENT = (15 / 700) * 100;
@@ -134,22 +136,53 @@ function gameTick() {
         ball.dx += hitPos * 0.2;
     }
 
-    let scored = false;
+    let from = null;
     if (ballTop < 0) {
-        console.log('Ponto para o jogador 1!');
         scored = true;
+        playerScores[0]++;
+        from = 'player';
+        // console.log('Ponto para o jogador 1!', playerScores[0], "-", playerScores[1]);
     } else if (ballBottom > 100) {
-        console.log('Ponto para o jogador 2!');
         scored = true;
+        playerScores[1]++;
+        from = 'opponent';
+        // console.log('Ponto para o jogador 2!', playerScores[0], "-", playerScores[1]);
     }
 
-    if (scored) {
+    if (from != null) {
         currentGameState = GAME_STATE.POINT_SCORED;
         players.forEach(playerWs => {
-            if (playerWs.readyState === WebSocket.OPEN) {
-                playerWs.send(JSON.stringify({ type: 'point_scored', message: 'Ponto!' }));
+            if (playerWs.readyState === WebSocket.OPEN) {                
+                let real = playerWs.playerId == 1 ? [playerScores[0], playerScores[1]] : [playerScores[1], playerScores[0]];
+                playerWs.send(JSON.stringify({ type: 'point_scored', message: 'Ponto!', from: from, scores: real }));        
             }
         });
+        
+        if(playerScores[0] >= 4 || playerScores[1] >= 4) {
+            players.forEach(playerWs => {
+                playerWs.send(JSON.stringify({ type: 'game_over', message: 'Game over!' }));
+            })
+            currentGameState = GAME_STATE.GAME_OVER;
+            if(queue.length > 0) {
+                if (playerScores[0] >= 4) {
+                    const loser = players.pop();
+                    queue.push(loser)
+                    loser.send(JSON.stringify({ type: 'game_in_progress', message: `Jogo ocorrendo, seu lugar na fila ${queue.length-1}` }));
+                    players.push(queue.shift())
+                } else {
+                    const loser = players.shift();
+                    queue.push(loser)
+                    loser.send(JSON.stringify({ type: 'game_in_progress', message: `Jogo ocorrendo, seu lugar na fila ${queue.length-1}` }));
+                    players.push(queue.shift())
+                }   
+                players[0].playerId = 1
+                players[0].send(JSON.stringify({ type: 'game_start', message: 'O jogo vai começar!', playerRole: 'opponent' }));
+                players[1].playerId = 0
+                players[1].send(JSON.stringify({ type: 'game_start', message: 'O jogo vai começar!', playerRole: 'player' }));
+            }
+            playerScores[0] = 0 
+            playerScores[1] = 0
+        }
 
         delayTimeout = setTimeout(() => {
             resetBall();
@@ -160,8 +193,8 @@ function gameTick() {
                     playerWs.send(JSON.stringify({ type: 'round_start', message: 'Nova rodada!' }));
                 }
                 // NOVO: SEMPRE envia a posição inicial dos paddles com o playerId
-                playerWs.send(JSON.stringify({ type: 'paddle_move', x: playerPaddles[0], playerId: 0 }));
-                playerWs.send(JSON.stringify({ type: 'paddle_move', x: playerPaddles[1], playerId: 1 }));
+                playerWs.send(JSON.stringify({ type: 'paddle_move', x: playerPaddles[0], playerId: players[0].playerId }));
+                playerWs.send(JSON.stringify({ type: 'paddle_move', x: playerPaddles[1], playerId: players[1].playerId }));
             });
         }, DELAY_AFTER_POINT_MS);
     }
@@ -180,8 +213,9 @@ console.log('Servidor WebSocket iniciado na porta 1110');
 
 wss.on('connection', function connection(ws) {
     if (players.length < 2) {
+        // ws.playerId = crypto.randomUUID();
         players.push(ws);
-        ws.playerId = players.length - 1;
+        ws.playerId = players.length + queue.length - 1;
 
         if (players.length === 2) {
             console.log('Dois jogadores conectados. Jogo começando!');
@@ -191,9 +225,10 @@ wss.on('connection', function connection(ws) {
                     message: 'O jogo vai começar!',
                     playerRole: index === 0 ? 'player' : 'opponent'
                 }));
+                
                 // NOVO: Garante que os clientes recebam a posição inicial (central) de AMBOS os paddles
-                playerWs.send(JSON.stringify({ type: 'paddle_move', x: playerPaddles[0], playerId: 0 }));
-                playerWs.send(JSON.stringify({ type: 'paddle_move', x: playerPaddles[1], playerId: 1 }));
+                playerWs.send(JSON.stringify({ type: 'paddle_move', x: playerPaddles[0], playerId: players[0].playerId }));
+                playerWs.send(JSON.stringify({ type: 'paddle_move', x: playerPaddles[1], playerId: players[1].playerId }));
             });
             startGameLoop();
         } else {
@@ -225,6 +260,7 @@ wss.on('connection', function connection(ws) {
 
         const playerIndex = players.indexOf(ws);
         if (playerIndex > -1) {
+            id = players[playerIndex].playerId
             players.splice(playerIndex, 1);
             if (players.length === 1) {
                 if (players[0].playerId === 1) {

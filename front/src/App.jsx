@@ -17,6 +17,7 @@ function App() {
     const [queuePosition, setQueuePosition] = useState(0);
     const ws = useRef(null);
     const canvasRef = useRef(null);
+    const scoreRef = useRef(null);
 
     // playerPaddleX e opponentPaddleX armazenam o CENTRO X do paddle em pixels
     const playerPaddleX = useRef(GAME_WIDTH / 2); // Começa no centro
@@ -120,17 +121,20 @@ function App() {
                     setQueuePosition(parts[parts.length - 1]);
                     setMessages(prev => [...prev, data.message]);
                     break;
-                case 'your_turn':
-                    setGameState('playing');
-                    setMessages(prev => [...prev, data.message]);
-                    myPlayerRole.current = data.playerRole;
-                    myPlayerId.current = (data.playerRole === 'player' ? 0 : 1);
+                // case 'your_turn':
+                //     setGameState('playing');
+                //     setMessages(prev => [...prev, data.message]);
+                //     myPlayerRole.current = data.playerRole;
+                //     myPlayerId.current = (data.playerRole === 'player' ? 0 : 1);
 
-                    ballPosition.current = { x: GAME_WIDTH / 2, y: GAME_HEIGHT / 2 };
-                    break;
+                //     ballPosition.current = { x: GAME_WIDTH / 2, y: GAME_HEIGHT / 2 };
+                //     break;
                 case 'paddle_move':
                     const newPaddleX = (data.x / 100) * GAME_WIDTH; // X é o centro do paddle em pixels
 
+                    console.log(data.playerId)
+                    console.log(myPlayerId.current)
+                    console.log("============================")
                     if (data.playerId === myPlayerId.current) {
                         playerPaddleX.current = newPaddleX;
                     } else {
@@ -149,9 +153,18 @@ function App() {
                         y: receivedBallY
                     };
                     break;
+                case 'game_over':
+                    setGameState('game_over');
+                    setMessages(prev => [...prev, data.message]);
+                    break;
                 case 'point_scored':
                     setGameState('point_scored');
-                    setMessages(prev => [...prev, data.message]);
+                    setMessages(prev => [...prev, data.message]);                
+                    let enemy = '<span class="material-symbols-rounded enemy">close_small</span>'.repeat(data.scores[0]);
+                    let normal = '<span class="material-symbols-rounded normal">circle</span>'.repeat(7 - (data.scores[0] + data.scores[1]));
+                    let mine = '<span class="material-symbols-rounded mine">check_small</span>'.repeat(data.scores[1]);
+                    let scoreDataHTML = enemy + normal + mine;
+                    scoreRef.current.innerHTML = scoreDataHTML;
                     break;
                 case 'round_start':
                     setGameState('playing');
@@ -259,17 +272,20 @@ function App() {
             {(gameState === 'playing' || gameState === 'point_scored') && (
                 <>
                     <p>Jogo em andamento! Use as setas <kbd>&#8592;</kbd> e <kbd>&#8594;</kbd> para mover sua raquete.</p>
-                    <canvas
-                        ref={canvasRef}
-                        width={GAME_WIDTH}
-                        height={GAME_HEIGHT}
-                        className="game-canvas"
-                    ></canvas>
+                    <div id="all">
+                        <canvas ref={canvasRef}
+                            width={GAME_WIDTH}
+                            height={GAME_HEIGHT}
+                            className="game-canvas"
+                        ></canvas>
+                        <div id="score" ref={scoreRef}></div>
+                    </div>
                 </>
             )}
             {(gameState === 'queued' && gameState !== 'disconnected') && (
                 <p>Já existe um jogo ocorrendo, Por favor, aguarde sua vez. <br/>Você está na {queuePosition}º posição da fila.</p>
             )}
+            {gameState === 'game_over' && <p>Fim de jogo.</p>}
             {gameState === 'disconnected' && <p>Desconectado do servidor.</p>}
             {gameState === 'error' && <p>Ocorreu um erro na conexão.</p>}
 

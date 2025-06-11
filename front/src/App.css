@@ -25,6 +25,35 @@ p {
     font-size: 1.1em;
 }
 
+div#all {
+    grid-template-rows: auto min-content;
+    display: grid;
+    gap: 15px;
+}
+
+div#score {
+    grid-auto-columns: auto;
+    grid-auto-flow: column;
+    font-size: 30pt;
+    padding: 0 50px;
+    display: grid;
+}
+
+span.mine {
+    color: #4CAF50;
+    scale: 1.4;
+}
+
+span.enemy {
+    color: #f44336;
+    scale: 1.4;
+}
+
+span.normal {
+    color: #505050;
+    scale: .5;
+}
+
 canvas {
     border: 1px #0a0a0a solid;
     border-radius: 10px;
