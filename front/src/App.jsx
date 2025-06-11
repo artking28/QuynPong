@@ -268,7 +268,7 @@ function App() {
                 </>
             )}
             {(gameState === 'queued' && gameState !== 'disconnected') && (
-                <p>Ja existe um jogo ocorrendo, seu lugar na fila: {queuePosition}º</p>
+                <p>Já existe um jogo ocorrendo, Por favor, aguarde sua vez. <br/>Você está na {queuePosition}º posição da fila.</p>
             )}
             {gameState === 'disconnected' && <p>Desconectado do servidor.</p>}
             {gameState === 'error' && <p>Ocorreu um erro na conexão.</p>}
