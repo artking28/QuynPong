@@ -1,6 +1,6 @@
 const WebSocket = require('ws');
 
-const wss = new WebSocket.Server({ port: 8080, host: '0.0.0.0' });
+const wss = new WebSocket.Server({ port: 1110, host: '0.0.0.0' });
 
 let players = [];
 let queue = [];
@@ -28,10 +28,10 @@ let playerPaddles = [50, 50]; // Posição X central de cada raquete (em %)
 
 const PADDLE_WIDTH_PERCENT = (100 / 350) * 100;
 const PADDLE_HEIGHT_PERCENT = (15 / 700) * 100;
-const BALL_SIZE_PERCENT_X = (15 / 350) * 100;
-const BALL_SIZE_PERCENT_Y = (15 / 700) * 100;
+const BALL_SIZE_PERCENT_X = (10 / 350) * 100;
+const BALL_SIZE_PERCENT_Y = (10 / 700) * 100;
 
-const INITIAL_BALL_SPEED = 0.8;
+const INITIAL_BALL_SPEED = 1;
 
 function resetBall() {
     ball.x = 50;
@@ -84,8 +84,8 @@ function gameTick() {
     const ballTop = ball.y - ballHalfHeight;
     const ballBottom = ball.y + ballHalfHeight;
 
-    const prevBallLeft = prevBallX - ballHalfWidth;
-    const prevBallRight = prevBallX + ballHalfWidth;
+    // const prevBallLeft = prevBallX - ballHalfWidth;
+    // const prevBallRight = prevBallX + ballHalfWidth;
     const prevBallTop = prevBallY - ballHalfHeight;
     const prevBallBottom = prevBallY + ballHalfHeight;
 
@@ -176,7 +176,7 @@ function gameTick() {
 }
 
 
-console.log('Servidor WebSocket iniciado na porta 8080');
+console.log('Servidor WebSocket iniciado na porta 1110');
 
 wss.on('connection', function connection(ws) {
     if (players.length < 2) {

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import './App.css';
 
-const WS_URL = 'ws://192.168.15.124:8080';
+const WS_URL = 'ws://192.168.15.124:1110';
 const GAME_TICK_RATE = 1000 / 60;
 
 const GAME_WIDTH = 350;
@@ -9,7 +9,7 @@ const GAME_HEIGHT = 700;
 
 const PADDLE_WIDTH = 100; // Largura do paddle em pixels
 const PADDLE_HEIGHT = 15;
-const BALL_SIZE = 15;
+const BALL_SIZE = 10;
 
 function App() {
     const [messages, setMessages] = useState([]);
@@ -35,7 +35,7 @@ function App() {
         const ctx = canvas.getContext('2d');
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = '#1a1a1a';
+        ctx.fillStyle = '#101010';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
         ctx.strokeStyle = '#666';
@@ -65,13 +65,11 @@ function App() {
             ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
             ctx.fillRect(0, canvas.height / 2 - 50, canvas.width, 100);
 
-            ctx.font = '24px "Press Start 2P"';
-            ctx.fillStyle = '#FFC107';
+            ctx.font = '20px "Avenir"';
+            ctx.fillStyle = '#fff';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText('PONTO!', canvas.width / 2, canvas.height / 2 - 10);
-            ctx.font = '16px "Press Start 2P"';
-            ctx.fillText('Nova rodada em breve...', canvas.width / 2, canvas.height / 2 + 20);
+            ctx.fillText('Nova rodada em 2 segundos...', canvas.width / 2, canvas.height / 2);
         }
 
     }, [gameState]);
@@ -250,10 +248,14 @@ function App() {
 
     return (
         <div className={`App ${gameState === 'playing' ? 'playing' : ''}`}>
-            <h1>Ping Pong Vertical Online</h1>
+            <h1>Quyn-pong</h1>
 
-            {gameState === 'loading' && <p>Conectando ao servidor...</p>}
-            {gameState === 'waiting' && <p>Esperando outro jogador...</p>}
+            {(gameState === 'loading' && gameState !== 'disconnected') && (
+                <p>Conectando ao servidor...</p>
+            )}
+            {(gameState === 'waiting' && gameState !== 'disconnected') && (
+                <p>Esperando outro jogador...</p>
+            )}
             {(gameState === 'playing' || gameState === 'point_scored') && (
                 <>
                     <p>Jogo em andamento! Use as setas <kbd>&#8592;</kbd> e <kbd>&#8594;</kbd> para mover sua raquete.</p>
@@ -265,18 +267,18 @@ function App() {
                     ></canvas>
                 </>
             )}
-            {gameState === 'queued' && (
-                <p>Jogo ocorrendo, seu lugar na fila: {queuePosition}</p>
+            {(gameState === 'queued' && gameState !== 'disconnected') && (
+                <p>Ja existe um jogo ocorrendo, seu lugar na fila: {queuePosition}º</p>
             )}
             {gameState === 'disconnected' && <p>Desconectado do servidor.</p>}
             {gameState === 'error' && <p>Ocorreu um erro na conexão.</p>}
 
-            <h2>Mensagens do Servidor:</h2>
+            {/* <h3>Mensagens do Servidor:</h3>
             <div className="messages">
                 {messages.map((msg, index) => (
                     <p key={index}>{msg}</p>
                 ))}
-            </div>
+            </div> */}
         </div>
     );
 }
