@@ -1,0 +1,12 @@
+{
+  "name": "quyn-pong-server",
+  "version": "1.0.0",
+  "main": "main.js",
+  "scripts": {
+      "dev": "bun run main.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Arthur Andrade",
+  "license": "ISC",
+  "description": ""
+}

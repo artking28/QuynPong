@@ -1,0 +1,92 @@
+.App {
+    font-family: 'Menlo', cursive; /* Fonte estilo arcade, se tiver */
+    background-color: #0a0a0a;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    min-height: 100vh;
+    padding: 20px;
+    display: flex;
+    color: white;
+}
+
+h1 {
+    font-size: 20pt;
+    color: #b08ef8;
+    margin: 30px;
+}
+
+h3 {
+    margin: 20px 0;
+}
+
+p {
+    margin-bottom: 15px;
+    font-size: 1.1em;
+}
+
+div#all {
+    grid-template-rows: auto min-content;
+    display: grid;
+    gap: 15px;
+}
+
+div#score {
+    grid-auto-columns: auto;
+    grid-auto-flow: column;
+    font-size: 30pt;
+    padding: 0 50px;
+    display: grid;
+}
+
+span.mine {
+    color: #4CAF50;
+    scale: 1.4;
+}
+
+span.enemy {
+    color: #f44336;
+    scale: 1.4;
+}
+
+span.normal {
+    color: #505050;
+    scale: .5;
+}
+
+canvas {
+    border: 1px #0a0a0a solid;
+    border-radius: 10px;
+}
+
+.messages {
+    margin-top: 20px;
+    max-height: 150px;
+    overflow-y: auto;
+    border: 1px solid #555;
+    padding: 10px;
+    width: 80%;
+    background-color: #333;
+    color: #ddd;
+    border-radius: 5px;
+    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.4);
+}
+
+.messages p {
+    margin: 5px 0;
+    padding: 3px;
+    font-size: 0.9em;
+    border-bottom: 1px dashed #444; /* Linha divisória sutil */
+}
+
+.messages p:last-child {
+    border-bottom: none;
+}
+
+kbd {
+    background-color: #0a0a0a;
+    font-family: monospace;
+    border: 1px solid #777;
+    border-radius: 3px;
+    padding: 2px 5px;
+}
